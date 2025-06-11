@@ -139,8 +139,8 @@ vec3 operator*(double scalar, const vec3& vec)
 class Matrix3x3
 {
 public:
-    Matrix3x3() : data{{0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}} {}
-    Matrix3x3(vec3 v1, vec3 v2, vec3 v3) {
+    Matrix3x3() : data{{0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}},isDefined{false} {}
+    Matrix3x3(vec3 v1, vec3 v2, vec3 v3):isDefined{true} {
         data[0][0] = v1[0]; data[0][1] = v1[1]; data[0][2] = v1[2];
         data[1][0] = v2[0]; data[1][1] = v2[1]; data[1][2] = v2[2];
         data[2][0] = v3[0]; data[2][1] = v3[1]; data[2][2] = v3[2];
@@ -174,8 +174,84 @@ public:
         }
         return result;
     }
+
+    Matrix3x3 reverse() const {
+        Matrix3x3 result;
+        double det = this->determinant();
+        if (det == 0) return result; // 不可逆矩阵
+        for (std::size_t i = 0; i < 3; ++i) {
+            for (std::size_t j = 0; j < 3; ++j) {
+                result(j, i) = this->cofactor(i, j) / det;
+            }
+        }
+        return result;
+    }
+
+    //计算指定位置的余子式
+    double cofactor(std::size_t row, std::size_t col) const {
+        double minor[2][2];
+        std::size_t m = 0, n = 0;
+        for (std::size_t i = 0; i < 3; ++i) {
+            if (i == row) continue;
+            n = 0;
+            for (std::size_t j = 0; j < 3; ++j) {
+                if (j == col) continue;
+                minor[m][n++] = data[i][j];
+            }
+            m++;
+        }
+        return minor[0][0] * minor[1][1] - minor[0][1] * minor[1][0];
+    }
+
+    // 计算矩阵的行列式
+    double determinant() const {
+        return data[0][0] * (data[1][1] * data[2][2] - data[1][2] * data[2][1]) -
+               data[0][1] * (data[1][0] * data[2][2] - data[1][2] * data[2][0]) +
+               data[0][2] * (data[1][0] * data[2][1] - data[1][1] * data[2][0]);
+    }
 private:
     double data[3][3];
+    bool isDefined;
+};
+
+//定义四元数类
+class Quaternion
+{
+public:
+    Quaternion() : w_(1.0), v_(vec3{}) {} //单位四元数
+    //四元数
+    Quaternion(double w, vec3 v) : w_(w), v_(v) {}
+
+    //四元数乘法
+    Quaternion operator*(const Quaternion& other) const {
+        return Quaternion(
+            w_ * other.w_ - v_.dot(other.v_),
+            v_ * other.w_ + other.v_ * w_ + v_.cross(other.v_)
+        );
+    }
+
+    Quaternion reverse() const {
+        return Quaternion(w_, vec3{} -v_);
+    }
+
+    vec3 toVec3() const {
+        return vec3(v_[0], v_[1], v_[2]);
+    }
+    
+    double w_;
+    vec3 v_;
+};
+
+class RotateQuaternion : public Quaternion
+{
+public:
+    RotateQuaternion(double theta, vec3 v)
+    {
+        double halfTheta = theta / 2.0;
+        w_ = std::cos(halfTheta);
+        v.normalize(); // 确保向量是单位向量
+        v_ = v * std::sin(halfTheta);
+    }
 };
 
 #endif 

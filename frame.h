@@ -101,9 +101,35 @@ public:
         }
     }
 
+    //基于四元数的旋转
+    void rotate(const RotateQuaternion& q, const std::shared_ptr<const Frame> other = Frame::getBaseFrame())
+    {
+        //先计算当前坐标系在另一个坐标系下的基向量
+        vec3 newBase[3];
+        for (int i = 0; i < 3; ++i) {
+            newBase[i] = {bases[i].dot(other->bases[0]),
+                          bases[i].dot(other->bases[1]),
+                          bases[i].dot(other->bases[2])};
+        }
+
+        //对当前坐标系的基向量进行旋转
+        vec3 rotatedBases[3];
+        for (int i = 0; i < 3; ++i) {
+            rotatedBases[i] = (q * Quaternion(0.0, newBase[i]) * q.reverse()).toVec3();
+        }
+        
+        //更新当前坐标系的基向量(还要转回基准坐标系)
+        for (int i = 0; i < 3; ++i) {
+            bases[i] =  rotatedBases[i][0] * other->bases[0] +
+                        rotatedBases[i][1] * other->bases[1] +
+                        rotatedBases[i][2] * other->bases[2];
+            //归一化基向量
+            bases[i].normalize();
+        }
+    }
+
     //当前坐标系相对于基准坐标系(基准坐标系为右手坐标系)的三个基向量
     std::array<vec3,3> bases;
 };
-
 
 #endif
