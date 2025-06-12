@@ -153,6 +153,10 @@ public:
         return data[row][col];
     }
 
+    vec3 operator[](std::size_t index) const {
+        return vec3(data[index][0], data[index][1], data[index][2]);
+    }
+
     Matrix3x3 operator*(const Matrix3x3& other) const {
         Matrix3x3 result;
         for (std::size_t i = 0; i < 3; ++i) {
@@ -174,7 +178,7 @@ public:
         }
         return result;
     }
-
+//有bug，待修复
     Matrix3x3 reverse() const {
         Matrix3x3 result;
         double det = this->determinant();
@@ -209,7 +213,7 @@ public:
                data[0][1] * (data[1][0] * data[2][2] - data[1][2] * data[2][0]) +
                data[0][2] * (data[1][0] * data[2][1] - data[1][1] * data[2][0]);
     }
-private:
+// private:
     double data[3][3];
     bool isDefined;
 };
