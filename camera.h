@@ -33,7 +33,7 @@ public:
         for (const auto& point : pointsInCameraWorld_) {
             if(point[2] < 0.0 || point[2] < nearPlane_ || point[2] > farPlane_)
                 continue; // 忽略不可见的点
-            projectedCanvas.addPoint(vec2(point[0],point[1])); // 投影到画布上
+            projectedCanvas.addPoint({point[0],point[1]}); // 投影到画布上
         }
         return projectedCanvas;
     }

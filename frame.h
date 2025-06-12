@@ -127,6 +127,15 @@ public:
             bases[i].normalize();
         }
     }
+    void print() const
+    {
+        for (int i = 0; i < 3; ++i) {
+            std::cout << "Base " << i << ": (" 
+                      << bases[i][0] << ", " 
+                      << bases[i][1] << ", " 
+                      << bases[i][2] << ")" << std::endl;
+        }
+    }
 
     //当前坐标系相对于基准坐标系(基准坐标系为右手坐标系)的三个基向量
     std::array<vec3,3> bases;

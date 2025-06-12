@@ -25,7 +25,34 @@ public:
 
     ~Line()
     {
-        // 在析构函数中从点的线段集合中移除自己
+        deleteLine(); // 删除线段时从起点和终点的线段集合中移除自己
+    }
+
+    double length() const
+    {
+        if (!start_ || !end_) 
+            return 0.0; // 如果起点或终点为空，返回长度为0
+        Point start = start_->copy(); // 复制起点
+        start.transform(end_->frame_); // 将起点转换到终点的坐标系
+        return (end_->position_ - start.position_).norm(); // 计算长度
+    }
+    //移除线段
+    void remove()
+    {
+        deleteLine(); // 从起点和终点的线段集合中移除自己
+        start_.reset(); // 清空起点
+        end_.reset();   // 清空终点
+    }
+
+    //返回一个 const shared_ptr
+    std::shared_ptr<const Line> get_const_shared_ptr() const {
+        return std::const_pointer_cast<const Line>(shared_from_this());
+    }
+
+private:
+    void deleteLine()
+    {
+        // 从起点和终点的线段集合中移除自己
         if (start_) {
             start_->lines_.erase(
                 std::remove_if(start_->lines_.begin(), start_->lines_.end(),
@@ -43,36 +70,6 @@ public:
                 end_->lines_.end());
         }
     }
-
-    double length() const
-    {
-        if (!start_ || !end_) return 0.0; // 如果起点或终点为空，返回长度为0
-        Point start = start_->copy(); // 复制起点
-
-        // std::cout<<start_->frame_->bases[0][0]<<" "<<start_->frame_->bases[0][1]<<" "<<start_->frame_->bases[0][2]<<std::endl;
-        // std::cout<<start_->frame_->bases[1][0]<<" "<<start_->frame_->bases[1][1]<<" "<<start_->frame_->bases[1][2]<<std::endl;
-        // std::cout<<start_->frame_->bases[2][0]<<" "<<start_->frame_->bases[2][1]<<" "<<start_->frame_->bases[2][2]<<std::endl;
-
-
-        std::cout<<"start trans before"<<start.position_[0]<<" "<<start.position_[1]<<" "<<start.position_[2]<<std::endl;
-
-        std::cout<<end_->frame_->bases[0][0]<<" "<<end_->frame_->bases[0][1]<<" "<<end_->frame_->bases[0][2]<<std::endl;
-        std::cout<<end_->frame_->bases[1][0]<<" "<<end_->frame_->bases[1][1]<<" "<<end_->frame_->bases[1][2]<<std::endl;
-        std::cout<<end_->frame_->bases[2][0]<<" "<<end_->frame_->bases[2][1]<<" "<<end_->frame_->bases[2][2]<<std::endl;
-
-        start.transform(end_->frame_); // 将起点转换到终点的坐标系
-
-        std::cout<<start.position_[0]<<" "<<start.position_[1]<<" "<<start.position_[2]<<std::endl;
-        vec3 diff = end_->position_ - start.position_;
-        return std::sqrt(diff.dot(diff)); // 计算长度
-    }
-
-    // 如果你想返回一个 const shared_ptr
-    std::shared_ptr<const Line> get_const_shared_ptr() const {
-        return std::const_pointer_cast<const Line>(shared_from_this());
-    }
-
-private:
     std::shared_ptr<Point> start_; // 起点
     std::shared_ptr<Point> end_;   // 终点
 };

@@ -19,39 +19,16 @@ public:
     //坐标系变换
     Point* transform(std::shared_ptr<const Frame> newFrame)
     {
-        std::cout<<"old frame bases:"<<std::endl;
-        std::cout<<frame_->bases[0][0]<<" "<<frame_->bases[0][1]<<" "<<frame_->bases[0][2]<<std::endl;
-        std::cout<<frame_->bases[1][0]<<" "<<frame_->bases[1][1]<<" "<<frame_->bases[1][2]<<std::endl;
-        std::cout<<frame_->bases[2][0]<<" "<<frame_->bases[2][1]<<" "<<frame_->bases[2][2]<<std::endl;
-
-        std::cout<<"new frame bases:"<<std::endl;
-        std::cout<<newFrame->bases[0][0]<<" "<<newFrame->bases[0][1]<<" "<<newFrame->bases[0][2]<<std::endl;
-        std::cout<<newFrame->bases[1][0]<<" "<<newFrame->bases[1][1]<<" "<<newFrame->bases[1][2]<<std::endl;
-        std::cout<<newFrame->bases[2][0]<<" "<<newFrame->bases[2][1]<<" "<<newFrame->bases[2][2]<<std::endl;
-
         Matrix3x3 newBases = Matrix3x3{newFrame->bases[0], newFrame->bases[1], newFrame->bases[2]}; // 获取新坐标系的基向量矩阵
-        newBases = newBases.reverse(); // 计算新坐标系的逆矩阵
-
-        std::cout<<"newBases:"<<std::endl;
-        std::cout<<newBases[0][0]<<" "<<newBases[0][1]<<" "<<newBases[0][2]<<std::endl;
-        std::cout<<newBases[1][0]<<" "<<newBases[1][1]<<" "<<newBases[1][2]<<std::endl;
-        std::cout<<newBases[2][0]<<" "<<newBases[2][1]<<" "<<newBases[2][2]<<std::endl;
-
+        if(newBases.reverse() == std::nullopt) {
+            std::cerr << "Error: The new frame is not invertible." << std::endl;
+            return this; // 返回当前点对象的指针
+        }
+        newBases = *newBases.reverse(); // 解包可选值，获取逆矩阵
         // 将点的位置从当前坐标系转换到新的坐标系
-        vec3 newPosition;
-        Matrix3x3 transMatrix = Matrix3x3{newFrame->bases[0], newFrame->bases[1], newFrame->bases[2]}.reverse() * Matrix3x3{frame_->bases[0], frame_->bases[1], frame_->bases[2]}; // 获取新坐标系的逆矩阵
-        
-        std::cout<<"transMatrix:"<<std::endl;
-        std::cout<<transMatrix[0][0]<<" "<<transMatrix[0][1]<<" "<<transMatrix[0][2]<<std::endl;
-        std::cout<<transMatrix[1][0]<<" "<<transMatrix[1][1]<<" "<<transMatrix[1][2]<<std::endl;
-        std::cout<<transMatrix[2][0]<<" "<<transMatrix[2][1]<<" "<<transMatrix[2][2]<<std::endl;
+        Matrix3x3 transMatrix = newBases * Matrix3x3{frame_->bases[0], frame_->bases[1], frame_->bases[2]}; // 获取新坐标系的逆矩阵
 
-
-        newPosition = transMatrix[0] * position_[0] + transMatrix[1] * position_[1] + transMatrix[2] * position_[2];
-
-        std::cout<<"newPosition:"<<std::endl;
-        std::cout<<newPosition[0]<<" "<<newPosition[1]<<" "<<newPosition[2]<<std::endl;
-        position_ = newPosition;
+        position_ = transMatrix[0] * position_[0] + transMatrix[1] * position_[1] + transMatrix[2] * position_[2];
         frame_ = newFrame; // 更新坐标系
         return this; // 返回当前点对象的指针
     }
