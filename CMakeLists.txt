@@ -9,5 +9,10 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 aux_source_directory(. SRC_LIST)
 
+add_subdirectory(dependencies/minifb)
+
 # 添加可执行文件
 add_executable(Frame_Rotate ${SRC_LIST})
+
+# Link MiniFB to your project:
+target_link_libraries(Frame_Rotate minifb)

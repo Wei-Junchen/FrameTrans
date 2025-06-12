@@ -20,9 +20,7 @@ public:
     {
         for(std::size_t i = 0;i<subscribedPoints_.size();++i)
         {
-            //把相机转换到点所在的坐标系
-            pointsInCameraWorld_[i] = subscribedPoints_[i]->position_ - 
-                         position_.transform(subscribedPoints_[i]->frame_)->position_;
+            pointsInCameraWorld_[i] = subscribedPoints_[i]->position_ - position_.transform(subscribedPoints_[i]->frame_).position_;
         }
     }
 
@@ -40,7 +38,7 @@ public:
 
 
     // 添加订阅的点
-    void subscribePoint(std::shared_ptr<const Point> point)
+    void subscribePoint(std::shared_ptr<const Point3D> point)
     {
         subscribedPoints_.push_back(point);
     }
@@ -59,7 +57,7 @@ public:
 
 private:
     //相机订阅的点
-    std::vector<std::shared_ptr<const Point>> subscribedPoints_;
+    std::vector<std::shared_ptr<const Point3D>> subscribedPoints_;
     std::vector<vec3> pointsInCameraWorld_; // 相机世界系下的点坐标
 
     //定义相机视野范围
@@ -69,7 +67,7 @@ private:
 
     //相机世界系(包含相机方向，但不包含位置)
     std::shared_ptr<const Frame> worldFrame_;
-    Point position_; // 相机位置(包含位置和坐标系)
+    Point3D position_; // 相机位置(包含位置和坐标系)
 };
 
 #endif
