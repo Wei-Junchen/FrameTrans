@@ -66,6 +66,42 @@ public:
         }
     }
     
+    void drawLine(uint32_t x1, uint32_t y1, uint32_t x2, uint32_t y2, uint32_t color)
+    {
+        if (x1 == x2 && y1 == y2) return;
+
+        int dx = abs(static_cast<int>(x2) - static_cast<int>(x1));
+        int dy = abs(static_cast<int>(y2) - static_cast<int>(y1));
+        int sx = (x1 < x2) ? 1 : -1;
+        int sy = (y1 < y2) ? 1 : -1;
+        int err = dx - dy;
+
+
+        int err2 = err * 2;
+        if (err2 > -dy) {
+            err -= dy;
+            x1 += sx;
+        }
+        if (err2 < dx) {
+            err += dx;
+            y1 += sy;
+        }
+        while (true) {
+            if (x1 == x2 && y1 == y2) break;
+            setPixel(x1, y1, color);
+
+            int err2 = err * 2;
+            if (err2 > -dy) {
+                err -= dy;
+                x1 += sx;
+            }
+            if (err2 < dx) {
+                err += dx;
+                y1 += sy;
+            }
+        }
+    }
+
     bool wait()
     {
         return mfb_wait_sync(window);

@@ -28,10 +28,10 @@ public:
     Canvas projectPointsToCanvas(const Canvas& canvas)
     {
         Canvas projectedCanvas;
-        for (const auto& point : pointsInCameraWorld_) {
-            if(point[2] < 0.0 || point[2] < nearPlane_ || point[2] > farPlane_)
+        for (std::size_t i = 0; i < subscribedPoints_.size(); ++i){
+            if(pointsInCameraWorld_[i][2] < 0.0 || pointsInCameraWorld_[i][2] < nearPlane_ || pointsInCameraWorld_[i][2] > farPlane_)
                 continue; // 忽略不可见的点
-            projectedCanvas.addPoint({point[0],point[1]}); // 投影到画布上
+            projectedCanvas.addPoint(std::static_pointer_cast<const Point>(subscribedPoints_[i])); // 投影到画布上
         }
         return projectedCanvas;
     }

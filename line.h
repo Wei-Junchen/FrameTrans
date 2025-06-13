@@ -9,6 +9,7 @@
 //定义线类(描述的是抽象的关系，不是具体的线段)
 class Line : public std::enable_shared_from_this<Line>
 {
+    friend class CanvasAdapter; // 允许CanvasAdapter类访问Line的私有成员
 public:
     // 注意：不能在构造函数中调用 shared_from_this()
     Line(std::shared_ptr<Point> start, std::shared_ptr<Point> end): start_(start), end_(end) {}

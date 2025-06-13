@@ -13,6 +13,7 @@ class Line; // 前向声明，避免循环依赖
 class Point
 {
     friend class Line; // 允许Line类访问Point的私有成员
+    friend class CanvasAdapter;
 public:
     // virtual Point& transform(std::shared_ptr<const Frame> newFrame) = 0; // 坐标系变换，纯虚函数
     virtual void print() const = 0; // 打印点信息，纯虚函数
@@ -27,11 +28,14 @@ public:
     Point2D(double x, double y) : position_{vec2{x, y}} {}
     Point2D(const vec2& position) : position_{position} {}
 
-    Point2D& transform(std::shared_ptr<const Frame> newFrame) //override
+    Point2D& setPosition(vec2 position) 
     {
-        // 2D点没有坐标系，所以直接返回当前点对象的指针
-        std::cerr << "Warning: Point2D does not support frame transformation." << std::endl;
+        position_ = position; // 设置点的位置
         return *this; // 返回当前点对象的指针
+    }
+    vec2 getPosition() const
+    {
+        return position_; // 返回点的位置
     }
 
     void print() const override
