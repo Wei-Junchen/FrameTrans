@@ -13,11 +13,11 @@ class Canvas
 {
 public:
     // 添加点到画布
-    void addPoint(std::shared_ptr<const Point> point) {
+    void addPoint(std::shared_ptr<const Point> point,vec2 position = vec2{0.0, 0.0}) {
         if (!point) {
             throw std::invalid_argument("Point cannot be null");
         }
-        points_.push_back(point);
+        points_.push_back(make_shared<const Point2D);
     }
 
     // 获取所有点
@@ -26,7 +26,7 @@ public:
     }
 
     // 清空画布上的点
-    void clear() {
+    void clear() { 
         points_.clear();
     }
 
@@ -35,7 +35,7 @@ public:
         return points_.size();
     }
 private:
-    std::vector<std::shared_ptr<const Point>> points_; // 存储画布上的点
+    std::vector<std::shared_ptr<const Point2D>> points_; // 存储画布上的点
 };
 
 class CanvasAdapter : public MiniFB

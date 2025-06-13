@@ -25,7 +25,7 @@ public:
     }
 
     //把所有点投影到一个画布上
-    Canvas projectPointsToCanvas(const Canvas& canvas)
+    void projectPointsToCanvas(const Canvas& canvas)
     {
         Canvas projectedCanvas;
         for (std::size_t i = 0; i < subscribedPoints_.size(); ++i){
@@ -33,9 +33,19 @@ public:
                 continue; // 忽略不可见的点
             projectedCanvas.addPoint(std::static_pointer_cast<const Point>(subscribedPoints_[i])); // 投影到画布上
         }
-        return projectedCanvas;
     }
 
+    //切换相机方向坐标系
+    void setWorldFrame(std::shared_ptr<const Frame> worldFrame)
+    {
+        worldFrame_ = worldFrame;
+    }
+
+     // 设置相机位置
+    void setPosition(Point3D position)
+    {
+        position_ = position;
+    }
 
     // 添加订阅的点
     void subscribePoint(std::shared_ptr<const Point3D> point)

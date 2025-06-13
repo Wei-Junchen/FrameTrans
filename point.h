@@ -27,6 +27,15 @@ class Point2D : public Point
 public:
     Point2D(double x, double y) : position_{vec2{x, y}} {}
     Point2D(const vec2& position) : position_{position} {}
+    
+    Point2D(std::shared_ptr<Point> point,vec2 position = vec2{0.0, 0.0}) 
+    {
+        if (!point) {
+            throw std::invalid_argument("Point cannot be null");
+        }
+        position_ = position; // 设置点的位置
+        point->lines_.push_back(std::make_shared<Line>(point, shared_from_this())); // 将点添加到线段集合中
+    }
 
     Point2D& setPosition(vec2 position) 
     {
