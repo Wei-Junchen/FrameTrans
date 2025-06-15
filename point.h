@@ -14,6 +14,7 @@ class Point
 {
     friend class Line; // 允许Line类访问Point的私有成员
     friend class CanvasAdapter;
+    friend class Camera;
 public:
     // virtual Point& transform(std::shared_ptr<const Frame> newFrame) = 0; // 坐标系变换，纯虚函数
     virtual void print() const = 0; // 打印点信息，纯虚函数
@@ -28,15 +29,6 @@ public:
     Point2D(double x, double y) : position_{vec2{x, y}} {}
     Point2D(const vec2& position) : position_{position} {}
     
-    Point2D(std::shared_ptr<Point> point,vec2 position = vec2{0.0, 0.0}) 
-    {
-        if (!point) {
-            throw std::invalid_argument("Point cannot be null");
-        }
-        position_ = position; // 设置点的位置
-        point->lines_.push_back(std::make_shared<Line>(point, shared_from_this())); // 将点添加到线段集合中
-    }
-
     Point2D& setPosition(vec2 position) 
     {
         position_ = position; // 设置点的位置
@@ -115,6 +107,19 @@ public:
             return 0.0; // 如果类型不匹配，返回0
     }
 
+    Point3D toMe(const Point3D& other)
+    {
+        if(other.frame_ == frame_) {
+            return Point3D(other.position_ - position_, frame_); // 如果点在同一坐标系下，直接返回位置差
+        }
+        return Point3D(other.copy().transform(frame_).position_ - position_, frame_); // 返回转换后的位置差
+    }
+
+    vec3 toVec3() const
+    {
+        return position_; // 返回点的位置作为vec3对象
+    }
+    
     vec3 position_; // 点的位置
     std::shared_ptr<const Frame> frame_; // 点所在的坐标系
 }; 

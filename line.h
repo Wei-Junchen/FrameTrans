@@ -10,13 +10,15 @@
 class Line : public std::enable_shared_from_this<Line>
 {
     friend class CanvasAdapter; // 允许CanvasAdapter类访问Line的私有成员
+    friend class Camera; // 允许Camera类访问Line的私有成员
 public:
     // 注意：不能在构造函数中调用 shared_from_this()
     Line(std::shared_ptr<Point> start, std::shared_ptr<Point> end): start_(start), end_(end) {}
     
-    static std::shared_ptr<Line> create(std::shared_ptr<Point> start, std::shared_ptr<Point> end)
+    static std::shared_ptr<Line> create(std::shared_ptr<Point> start, std::shared_ptr<Point> end,uint32_t color = COLOR_WHITE)
     {
         auto line = std::make_shared<Line>(start, end);
+        line->color = color; // 设置线段颜色
         // 添加线段到起点和终点的线段集合中
         if (start) start->lines_.push_back(line->get_const_shared_ptr());
         if (end) end->lines_.push_back(line->get_const_shared_ptr());
@@ -70,6 +72,7 @@ protected:
     }
     std::shared_ptr<Point> start_; // 起点
     std::shared_ptr<Point> end_;   // 终点
+    uint32_t color {COLOR_WHITE};
 };
 
 #endif

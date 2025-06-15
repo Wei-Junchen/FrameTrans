@@ -11,31 +11,49 @@
 //定义画布，将来可以用来绘制图形或显示内容
 class Canvas
 {
+    friend class Camera;
 public:
-    // 添加点到画布
-    void addPoint(std::shared_ptr<const Point> point,vec2 position = vec2{0.0, 0.0}) {
-        if (!point) {
-            throw std::invalid_argument("Point cannot be null");
-        }
-        points_.push_back(make_shared<const Point2D);
+    Canvas(uint16_t width = 800, uint16_t height = 600)
+        : width_(width), height_(height) {}
+    
+        // 添加点到画布
+    std::shared_ptr<Point2D> addPoint(vec2 position = vec2{0.0, 0.0}) {
+        originPositions_.push_back(position); // 存储原始位置
+        //y轴翻转
+        position[1] *= -1;
+        vec2 adjustedPosition = position + vec2{xOffset_, yOffset_}; // 调整点的位置
+        points_.push_back(std::make_shared<Point2D>(adjustedPosition)); // 将点添加到画布上
+        return points_.back(); // 返回添加的点的智能指针
     }
 
     // 获取所有点
-    const std::vector<std::shared_ptr<const Point>>& getPoints() const {
+    const std::vector<std::shared_ptr<Point2D>>& getPoints() const {
         return points_;
     }
 
     // 清空画布上的点
     void clear() { 
         points_.clear();
+        originPositions_.clear(); // 清空原始位置
     }
 
     // 获取画布上点的数量
     std::size_t size() const {
         return points_.size();
     }
-private:
-    std::vector<std::shared_ptr<const Point2D>> points_; // 存储画布上的点
+
+    void printPoints() const {
+        for (const auto& point : points_) {
+            point->print(); // 打印每个点的信息
+        }
+    }
+protected:
+    std::vector<std::shared_ptr<Point2D>> points_; // 存储画布上的点
+    std::vector<vec2> originPositions_; // 存储原始位置
+    uint16_t width_;  // 画布宽度
+    uint16_t height_; // 画布高度
+    double xOffset_ {400}; // 画布左上角x坐标偏移
+    double yOffset_ {300}; // 画布左上角y坐标偏移
 };
 
 class CanvasAdapter : public MiniFB
@@ -85,7 +103,7 @@ public:
                 static_cast<uint32_t>(p1->position_[1]),
                 static_cast<uint32_t>(p2->position_[0]),
                 static_cast<uint32_t>(p2->position_[1]),
-                color // 绘制白色线段
+                line-> color // 绘制白色线段
             );
         } 
     }
