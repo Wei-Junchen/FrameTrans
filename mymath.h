@@ -175,6 +175,10 @@ public:
         }
         return std::sqrt(length);
     }
+    vectorType type() const 
+    {
+        return type_;
+    }
 protected:
     //是行向量还是列向量
     vectorType type_ {vectorType::RowVector}; // 默认是行向量
@@ -254,9 +258,21 @@ class Matrix3x3
 public:
     Matrix3x3() : data{{0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}}{}
     Matrix3x3(vec3 v1, vec3 v2, vec3 v3){
-        data[0][0] = v1[0]; data[0][1] = v1[1]; data[0][2] = v1[2];
-        data[1][0] = v2[0]; data[1][1] = v2[1]; data[1][2] = v2[2];
-        data[2][0] = v3[0]; data[2][1] = v3[1]; data[2][2] = v3[2];
+        if(v1.type() != v2.type() || v1.type() != v3.type()) {
+            throw std::invalid_argument("Vectors must be of the same type (RowVector or ColumnVector)");
+        }
+        if(v1.type() == vectorType::RowVector)
+        {
+            data[0][0] = v1[0]; data[0][1] = v1[1]; data[0][2] = v1[2];
+            data[1][0] = v2[0]; data[1][1] = v2[1]; data[1][2] = v2[2];
+            data[2][0] = v3[0]; data[2][1] = v3[1]; data[2][2] = v3[2];
+        }
+        else
+        {
+            data[0][0] = v1[0]; data[0][1] = v2[0]; data[0][2] = v3[0];
+            data[1][0] = v1[1]; data[1][1] = v2[1]; data[1][2] = v3[1];
+            data[2][0] = v1[2]; data[2][1] = v2[2]; data[2][2] = v3[2];
+        }
     }
     double& operator()(std::size_t row, std::size_t col) {
         return data[row][col];
@@ -300,7 +316,7 @@ public:
         Matrix3x3 inv;
         for (std::size_t i = 0; i < 3; ++i) {
             for (std::size_t j = 0; j < 3; ++j) {
-                inv(i, j) = cofactor(i, j) / det;
+                inv(i, j) = cofactor(j, i) / det * ((i + j) % 2 == 0 ? 1 : -1);
             }
         }
         return inv;

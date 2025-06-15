@@ -6,6 +6,7 @@
 #include <memory>
 #include <vector>
 #include <initializer_list>
+#include "minifbAdapter.h"
 
 class Line; // 前向声明，避免循环依赖
 
@@ -21,6 +22,7 @@ public:
     virtual double distanceTo(const Point& other) const = 0; // 计算到另一个点的距离，纯虚函数
 protected:
     std::vector<std::shared_ptr<const Line>> lines_; // 点所在的线段集合
+    uint32_t color {COLOR_WHITE}; // 点的颜色，默认为白色
 };
 
 class Point2D : public Point
@@ -70,16 +72,15 @@ public:
     //坐标系变换
     Point3D& transform(std::shared_ptr<const Frame> newFrame) //override
     {
-        Matrix3x3 newBases = Matrix3x3{newFrame->bases[0], newFrame->bases[1], newFrame->bases[2]}; // 获取新坐标系的基向量矩阵
+        Matrix3x3 newBases = Matrix3x3{newFrame->bases[0].transpose(), newFrame->bases[1].transpose(), newFrame->bases[2].transpose()}; // 获取新坐标系的基向量矩阵
         if(newBases.reverse() == std::nullopt) {
             std::cerr << "Error: The new frame is not invertible." << std::endl;
             return *this; // 返回当前点对象的指针
         }
-        newBases = *newBases.reverse(); // 解包可选值，获取逆矩阵
+        newBases = *newBases.reverse(); // 解包可选值，获取逆矩阵;
         // 将点的位置从当前坐标系转换到新的坐标系
-        Matrix3x3 transMatrix = newBases * Matrix3x3{frame_->bases[0], frame_->bases[1], frame_->bases[2]}; // 获取新坐标系的逆矩阵
-
-        position_ = transMatrix[0] * position_[0] + transMatrix[1] * position_[1] + transMatrix[2] * position_[2];
+        Matrix3x3 transMatrix = newBases * Matrix3x3{frame_->bases[0].transpose(), frame_->bases[1].transpose(), frame_->bases[2].transpose()}; // 获取新坐标系的逆矩阵
+        position_ = transMatrix * position_; // 使用矩阵乘法转换点的位置
         frame_ = newFrame; // 更新坐标系
         return *this; // 返回当前点对象的指针
     }

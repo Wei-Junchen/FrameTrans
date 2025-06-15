@@ -7,7 +7,13 @@
 #include <vector>
 #include <memory>
 
+//是否使用透视变换
+#define IF_PERSPECTIVE_TRANSFORM 1
+#if IF_PERSPECTIVE_TRANSFORM
 #define VISION_RATIO 1000.0
+#else
+#define VISION_RATIO 100.0
+#endif
 
 struct brokenLine
 {
@@ -28,12 +34,21 @@ public:
     {
         for(std::size_t i = 0;i<subscribedPoints_.size();++i)
         {
+            // Point3D tmp = subscribedPoints_[i]->copy(); // 复制点对象
+            // tmp.transform(Frame::getBaseFrame());
             Point3D positionInCameraWorld = position_.toMe(*subscribedPoints_[i]); // 计算点在相机世界系下的位置
+            // std::cout<<"Point " << i <<"true world:"<< tmp.toVec3()[0]<<", " << tmp.toVec3()[1]<<", " << tmp.toVec3()[2]<< "  in camera world: " << positionInCameraWorld.toVec3()[0]  << ", " 
+            //          << positionInCameraWorld.toVec3()[1] << ", " << positionInCameraWorld.toVec3()[2] << std::endl;
             positionInCameraWorld.transform(worldFrame_); // 将点转换到相机的世界系下
             if(pointsInCameraWorld_.size() <= i)
                 pointsInCameraWorld_.push_back(positionInCameraWorld.toVec3()); // 如果当前点的索引超出范围，则添加新的点
             else
                 pointsInCameraWorld_[i] = positionInCameraWorld.toVec3(); // 更新现有点的坐标
+            // if(i==0)
+            // std::cout << "Point " << i << " in camera world: " 
+            //           << pointsInCameraWorld_[i][0] << ", " 
+            //           << pointsInCameraWorld_[i][1] << ", " 
+            //           << pointsInCameraWorld_[i][2] << std::endl;
         }
     }
 
@@ -58,11 +73,11 @@ public:
                         if(isPointInView(pointsInCameraWorld_[endPointIndex]))
                         {
                             if(!addedPoints[i])
-                                addedPoints[i] = canvas.addPoint(vec2{pointsInCameraWorld_[i][0] * (nearPlane_ / pointsInCameraWorld_[i][2]) * VISION_RATIO, 
-                                                                                     pointsInCameraWorld_[i][1] * (nearPlane_ / pointsInCameraWorld_[i][2]) * VISION_RATIO}); // 将起点投影到画布上
+                                addedPoints[i] = canvas.addPoint(vec2{pointsInCameraWorld_[i][0] *  VISION_RATIO * (IF_PERSPECTIVE_TRANSFORM?(nearPlane_ / pointsInCameraWorld_[i][2]):1.0) , 
+                                                                                     pointsInCameraWorld_[i][1] * VISION_RATIO * (IF_PERSPECTIVE_TRANSFORM?(nearPlane_ / pointsInCameraWorld_[i][2]):1.0) }); // 将起点投影到画布上
                             if(!addedPoints[endPointIndex])
-                                addedPoints[endPointIndex] = canvas.addPoint(vec2{pointsInCameraWorld_[endPointIndex][0] * (nearPlane_ / pointsInCameraWorld_[endPointIndex][2]) * VISION_RATIO,
-                                                                                        pointsInCameraWorld_[endPointIndex][1] * (nearPlane_ / pointsInCameraWorld_[endPointIndex][2]) * VISION_RATIO}); // 将终点投影到画布上
+                                addedPoints[endPointIndex] = canvas.addPoint(vec2{pointsInCameraWorld_[endPointIndex][0] *  VISION_RATIO * (IF_PERSPECTIVE_TRANSFORM?(nearPlane_ / pointsInCameraWorld_[endPointIndex][2]):1.0),
+                                                                                        pointsInCameraWorld_[endPointIndex][1] * VISION_RATIO * (IF_PERSPECTIVE_TRANSFORM?(nearPlane_ / pointsInCameraWorld_[endPointIndex][2]):1.0)}); // 将终点投影到画布上
                             lines.push_back(Line::create(addedPoints[i], addedPoints[endPointIndex],line->color)); // 创建线段并添加到画布上
                         }
                         else 
@@ -75,11 +90,11 @@ public:
                         if(isPointInView(pointsInCameraWorld_[startPointIndex]))
                         {
                             if(!addedPoints[i])
-                                addedPoints[i] = canvas.addPoint(vec2{pointsInCameraWorld_[i][0] * (nearPlane_ / pointsInCameraWorld_[i][2]) * VISION_RATIO, 
-                                                                                     pointsInCameraWorld_[i][1] * (nearPlane_ / pointsInCameraWorld_[i][2]) * VISION_RATIO}); // 将起点投影到画布上
+                                addedPoints[i] = canvas.addPoint(vec2{pointsInCameraWorld_[i][0] * VISION_RATIO * (IF_PERSPECTIVE_TRANSFORM?(nearPlane_ / pointsInCameraWorld_[i][2]):1.0), 
+                                                                                     pointsInCameraWorld_[i][1] * VISION_RATIO * (IF_PERSPECTIVE_TRANSFORM?(nearPlane_ / pointsInCameraWorld_[i][2]):1.0)}); // 将起点投影到画布上
                             if(!addedPoints[startPointIndex])
-                                addedPoints[startPointIndex] = canvas.addPoint(vec2{pointsInCameraWorld_[startPointIndex][0] * (nearPlane_ / pointsInCameraWorld_[startPointIndex][2]) * VISION_RATIO,
-                                                                                        pointsInCameraWorld_[startPointIndex][1] * (nearPlane_ / pointsInCameraWorld_[startPointIndex][2]) * VISION_RATIO}); // 将终点投影到画布上
+                                addedPoints[startPointIndex] = canvas.addPoint(vec2{pointsInCameraWorld_[startPointIndex][0] * VISION_RATIO * (IF_PERSPECTIVE_TRANSFORM?(nearPlane_ / pointsInCameraWorld_[startPointIndex][2]):1.0),
+                                                                                        pointsInCameraWorld_[startPointIndex][1] * VISION_RATIO * (IF_PERSPECTIVE_TRANSFORM?(nearPlane_ / pointsInCameraWorld_[startPointIndex][2]):1.0)}); // 将终点投影到画布上
                             lines.push_back(Line::create(addedPoints[i], addedPoints[startPointIndex],line->color)); // 创建线段并添加到画布上
                         }
                         else 

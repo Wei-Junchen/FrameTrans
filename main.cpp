@@ -19,7 +19,7 @@ int main()
     std::vector<std::shared_ptr<Line>> lines;
     lines.push_back(Line::create(points[0], points[1],COLOR_BLUE));
     lines.push_back(Line::create(points[0], points[2],COLOR_BLUE));
-    lines.push_back(Line::create(points[0], points[3],COLOR_MAGENTA));
+    lines.push_back(Line::create(points[0], points[3],COLOR_CYAN));
     lines.push_back(Line::create(points[1], points[4],COLOR_BLUE));
     lines.push_back(Line::create(points[1], points[5],COLOR_MAGENTA));
     lines.push_back(Line::create(points[2], points[4],COLOR_BLUE));
@@ -38,10 +38,10 @@ int main()
     }
     
     //设定相机的位置和朝向
-    camera.setPosition(Point3D(-1.75, 0.0, 0.0)); // 设置相机位置,在静止坐标系中
-    //std::shared_ptr<Frame> cameraDirectionFrame = std::make_shared<Frame>(vec3(0.0, 1.0, 0.0), vec3(0.0, 0.0, 1.0), vec3(1.0, 0.0, 0.0));
+    camera.setPosition(Point3D(-4.0, 0.0, 0.0)); // 设置相机位置,在静止坐标系中
     std::shared_ptr<Frame> cameraDirectionFrame = std::make_shared<Frame>(vec3(1.0, 0.0, 0.0), vec3(0.0, 1.0, 0.0), vec3(0.0, 0.0, 1.0));
     cameraDirectionFrame->rotate(DegToRad(0.0),DegToRad(90.0),DegToRad(0.0));
+    cameraDirectionFrame->rotate(DegToRad(90.0),DegToRad(0.0),DegToRad(0.0));
     //打印旋转后的坐标系基向量
     std::cout << "Camera Direction Frame Bases:" << std::endl;
     for (const auto& base : cameraDirectionFrame->bases) {
@@ -67,6 +67,8 @@ int main()
     {
         cubeFrame->rotate({DegToRad(1),vec3{0.0, 0.0, 1.0}}); // 绕Y轴旋转
         camera.calculatePointsInCameraWorld(); // 重新计算所有点在相机世界系下的坐标
+        std::cout << "Calculated points in camera world coordinates." << std::endl;
+        camera.printAllPoints(); // 打印相机世界系下的点坐标
         camera.projectPointsToCanvas(*canvas); // 将点投影到画布上
         canvasAdapter.clear(); // 清空画布
         canvasAdapter.drawPoint(COLOR_GREEN); // 绘制点
