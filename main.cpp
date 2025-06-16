@@ -38,17 +38,19 @@ int main()
     }
     
     //设定相机的位置和朝向
-    camera.setPosition(Point3D(-4.0, 0.0, 0.0)); // 设置相机位置,在静止坐标系中
-    std::shared_ptr<Frame> cameraDirectionFrame = std::make_shared<Frame>(vec3(1.0, 0.0, 0.0), vec3(0.0, 1.0, 0.0), vec3(0.0, 0.0, 1.0));
-    cameraDirectionFrame->rotate(DegToRad(0.0),DegToRad(90.0),DegToRad(0.0));
-    cameraDirectionFrame->rotate(DegToRad(90.0),DegToRad(0.0),DegToRad(0.0));
-    //打印旋转后的坐标系基向量
-    std::cout << "Camera Direction Frame Bases:" << std::endl;
-    for (const auto& base : cameraDirectionFrame->bases) {
-        std::cout << "Base: (" << base[0] << ", " << base[1] << ", " << base[2] << ")" << std::endl;
-    }
+    camera.setPosition(Point3D(-4.0, 4.0, -4.0)); // 设置相机位置,在静止坐标系中
+    // std::shared_ptr<Frame> cameraDirectionFrame = std::make_shared<Frame>(vec3(1.0, 0.0, 0.0), vec3(0.0, 1.0, 0.0), vec3(0.0, 0.0, 1.0));
+    // cameraDirectionFrame->rotate(DegToRad(0.0),DegToRad(90.0),DegToRad(0.0));
+    // cameraDirectionFrame->rotate(DegToRad(90.0),DegToRad(0.0),DegToRad(0.0));
+    // //打印旋转后的坐标系基向量
+    // std::cout << "Camera Direction Frame Bases:" << std::endl;
+    // for (const auto& base : cameraDirectionFrame->bases) {
+    //     std::cout << "Base: (" << base[0] << ", " << base[1] << ", " << base[2] << ")" << std::endl;
+    // }
+    //camera.setWorldFrame(cameraDirectionFrame);
+    
+    camera.setWorldFrame(vec3{1.0, 0.0, 0.0},DegToRad(0.0)); // 设置相机的世界系为静止坐标系
 
-    camera.setWorldFrame(cameraDirectionFrame);
 
     camera.calculatePointsInCameraWorld(); // 计算所有点在相机世界系下的坐标
     std::cout << "Calculated points in camera world coordinates." << std::endl;
@@ -65,7 +67,7 @@ int main()
 
     while(canvasAdapter.wait())
     {
-        cubeFrame->rotate({DegToRad(1),vec3{0.0, 0.0, 1.0}}); // 绕Y轴旋转
+        cubeFrame->rotate({DegToRad(0.1),vec3{0.0, 0.0, 1.0}}); // 绕Y轴旋转
         camera.calculatePointsInCameraWorld(); // 重新计算所有点在相机世界系下的坐标
         std::cout << "Calculated points in camera world coordinates." << std::endl;
         camera.printAllPoints(); // 打印相机世界系下的点坐标

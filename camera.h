@@ -12,7 +12,7 @@
 #if IF_PERSPECTIVE_TRANSFORM
 #define VISION_RATIO 1000.0
 #else
-#define VISION_RATIO 100.0
+#define VISION_RATIO 10.0
 #endif
 
 struct brokenLine
@@ -34,21 +34,12 @@ public:
     {
         for(std::size_t i = 0;i<subscribedPoints_.size();++i)
         {
-            // Point3D tmp = subscribedPoints_[i]->copy(); // 复制点对象
-            // tmp.transform(Frame::getBaseFrame());
             Point3D positionInCameraWorld = position_.toMe(*subscribedPoints_[i]); // 计算点在相机世界系下的位置
-            // std::cout<<"Point " << i <<"true world:"<< tmp.toVec3()[0]<<", " << tmp.toVec3()[1]<<", " << tmp.toVec3()[2]<< "  in camera world: " << positionInCameraWorld.toVec3()[0]  << ", " 
-            //          << positionInCameraWorld.toVec3()[1] << ", " << positionInCameraWorld.toVec3()[2] << std::endl;
             positionInCameraWorld.transform(worldFrame_); // 将点转换到相机的世界系下
             if(pointsInCameraWorld_.size() <= i)
                 pointsInCameraWorld_.push_back(positionInCameraWorld.toVec3()); // 如果当前点的索引超出范围，则添加新的点
             else
                 pointsInCameraWorld_[i] = positionInCameraWorld.toVec3(); // 更新现有点的坐标
-            // if(i==0)
-            // std::cout << "Point " << i << " in camera world: " 
-            //           << pointsInCameraWorld_[i][0] << ", " 
-            //           << pointsInCameraWorld_[i][1] << ", " 
-            //           << pointsInCameraWorld_[i][2] << std::endl;
         }
     }
 
@@ -73,11 +64,9 @@ public:
                         if(isPointInView(pointsInCameraWorld_[endPointIndex]))
                         {
                             if(!addedPoints[i])
-                                addedPoints[i] = canvas.addPoint(vec2{pointsInCameraWorld_[i][0] *  VISION_RATIO * (IF_PERSPECTIVE_TRANSFORM?(nearPlane_ / pointsInCameraWorld_[i][2]):1.0) , 
-                                                                                     pointsInCameraWorld_[i][1] * VISION_RATIO * (IF_PERSPECTIVE_TRANSFORM?(nearPlane_ / pointsInCameraWorld_[i][2]):1.0) }); // 将起点投影到画布上
+                                addedPoints[i] = canvas.addPoint(perspectiveTransform(pointsInCameraWorld_[i])); // 将起点投影到画布上
                             if(!addedPoints[endPointIndex])
-                                addedPoints[endPointIndex] = canvas.addPoint(vec2{pointsInCameraWorld_[endPointIndex][0] *  VISION_RATIO * (IF_PERSPECTIVE_TRANSFORM?(nearPlane_ / pointsInCameraWorld_[endPointIndex][2]):1.0),
-                                                                                        pointsInCameraWorld_[endPointIndex][1] * VISION_RATIO * (IF_PERSPECTIVE_TRANSFORM?(nearPlane_ / pointsInCameraWorld_[endPointIndex][2]):1.0)}); // 将终点投影到画布上
+                                addedPoints[endPointIndex] = canvas.addPoint(perspectiveTransform(pointsInCameraWorld_[endPointIndex])); // 将终点投影到画布上
                             lines.push_back(Line::create(addedPoints[i], addedPoints[endPointIndex],line->color)); // 创建线段并添加到画布上
                         }
                         else 
@@ -90,11 +79,9 @@ public:
                         if(isPointInView(pointsInCameraWorld_[startPointIndex]))
                         {
                             if(!addedPoints[i])
-                                addedPoints[i] = canvas.addPoint(vec2{pointsInCameraWorld_[i][0] * VISION_RATIO * (IF_PERSPECTIVE_TRANSFORM?(nearPlane_ / pointsInCameraWorld_[i][2]):1.0), 
-                                                                                     pointsInCameraWorld_[i][1] * VISION_RATIO * (IF_PERSPECTIVE_TRANSFORM?(nearPlane_ / pointsInCameraWorld_[i][2]):1.0)}); // 将起点投影到画布上
+                                addedPoints[i] = canvas.addPoint(perspectiveTransform(pointsInCameraWorld_[i])); // 将起点投影到画布上
                             if(!addedPoints[startPointIndex])
-                                addedPoints[startPointIndex] = canvas.addPoint(vec2{pointsInCameraWorld_[startPointIndex][0] * VISION_RATIO * (IF_PERSPECTIVE_TRANSFORM?(nearPlane_ / pointsInCameraWorld_[startPointIndex][2]):1.0),
-                                                                                        pointsInCameraWorld_[startPointIndex][1] * VISION_RATIO * (IF_PERSPECTIVE_TRANSFORM?(nearPlane_ / pointsInCameraWorld_[startPointIndex][2]):1.0)}); // 将终点投影到画布上
+                                addedPoints[startPointIndex] = canvas.addPoint(perspectiveTransform(pointsInCameraWorld_[startPointIndex])); // 将终点投影到画布上
                             lines.push_back(Line::create(addedPoints[i], addedPoints[startPointIndex],line->color)); // 创建线段并添加到画布上
                         }
                         else 
@@ -137,11 +124,47 @@ public:
             ;;
         }
     }
+    //透视变换函数
+    vec2 perspectiveTransform(const vec3& point) const
+    {
+        if(IF_PERSPECTIVE_TRANSFORM)
+        {
+            double z = point[2] == 0.0 ? 1e-6 : point[2]; // 避免除以零
+            return vec2{point[0] * VISION_RATIO * (nearPlane_ / z), point[1] * VISION_RATIO * (nearPlane_ / z)};
+            // vec2 perspectivedPosition;
+            // perspectivedPosition[0] = point[0] / (point[2] * std::tan(DegToRad(fieldOfView_) / 2.0 )); // 计算x坐标
+            // perspectivedPosition[1] = point[1] / (point[2] * std::tan(DegToRad(fieldOfView_) / 2.0 )); // 计算y坐标
+            // return perspectivedPosition * 75.0; // 返回透视变换后的二维坐标
+        }
+        else
+        {
+            return vec2{point[0] * VISION_RATIO, point[1] * VISION_RATIO}; // 直接返回二维坐标
+        }
+    }
 
     //切换相机方向坐标系
     void setWorldFrame(std::shared_ptr<const Frame> worldFrame)
     {
         worldFrame_ = worldFrame;
+    }
+
+    void setWorldFrame(vec3 direction,double bias = 0.0)
+    {
+        direction.normalize(); // 确保方向向量是单位向量
+        //创建一个新的Frame，使得z轴正方向为direction
+        vec3 xAxis = vec3(1.0, 0.0, 0.0); // 默认x轴
+        if (direction.dot(xAxis) > 0.9999) { // 如果方向向量与x轴重合，则使用y轴作为x轴
+            xAxis = vec3(0.0, 1.0, 0.0); 
+        }
+        vec3 yAxis = direction.cross(xAxis); // 计算y轴
+        yAxis.normalize(); // 归一化y轴
+        xAxis = yAxis.cross(direction); // 计算x轴
+        xAxis.normalize(); // 归一化x轴
+        auto newFrame = std::make_shared<Frame>(xAxis, yAxis, direction); // 创建新的Frame
+        newFrame->print();
+        newFrame->rotate({bias,direction});
+        newFrame->print();
+        worldFrame_ = newFrame; // 设置相机的世界系为新的Frame
     }
 
     //设置相机位置

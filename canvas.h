@@ -19,8 +19,8 @@ public:
         // 添加点到画布
     std::shared_ptr<Point2D> addPoint(vec2 position = vec2{0.0, 0.0}) {
         originPositions_.push_back(position); // 存储原始位置
-        //y轴翻转
-        position = position * -1;
+        position = vec2{-position[0], -position[1]}; // 翻转y轴坐标
+
         vec2 adjustedPosition = position + vec2{xOffset_, yOffset_}; // 调整点的位置
         points_.push_back(std::make_shared<Point2D>(adjustedPosition)); // 将点添加到画布上
         return points_.back(); // 返回添加的点的智能指针
