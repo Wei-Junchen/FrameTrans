@@ -5,6 +5,7 @@
 #include <initializer_list>
 #include <exception>
 #include <optional>
+#include <type_traits>
 
 constexpr double DegToRad(double deg) {
     return deg * 3.14159265358979323 / 180.0;
@@ -248,7 +249,194 @@ class Matrix
 {
 public:
     Matrix() = default;
-    
+    Matrix(std::initializer_list<std::initializer_list<double>> list)
+    {
+        std::size_t i = 0;
+        for (const auto& row : list) {
+            std::size_t j = 0;
+            for (const auto& value : row) {
+                if (i < M && j < N) {
+                    data[i][j] = value;
+                }
+                ++j;
+            }
+            ++i;
+        }
+    }
+    template<std::size_t MM = M, typename = std::enable_if_t<MM == N>>
+     //计算矩阵的行列式(通过化为上三角阵法)
+    double determinant() const{
+        Matrix<M, M> temp = *this; // 创建一个临时矩阵
+        double det = 1.0;
+        for (std::size_t i = 0; i < M; ++i) {
+            //先找到第一列的非零元
+            for(std::size_t j = i ; j < M ; ++j)
+            {
+                if(temp(j,i) != 0)
+                {
+                    if(j != i) //如果不是当前行
+                    {
+                        //交换行
+                        for(std::size_t k = 0; k < M; ++k)
+                            std::swap(temp(i,k),temp(j,k));
+                        det *= -1; //交换行会改变行列式的符号
+                    }
+                    break;
+                }
+            }
+            if (temp(i, i) == 0) {
+                return 0.0; // 如果对角线元素为0，则行列式为0
+            }
+            //接下来将这一列的其他行消为0
+            for (std::size_t j = i + 1; j < M; ++j) {
+                if (temp(j, i) != 0) {
+                    double factor = temp(j, i) / temp(i, i);
+                    for (std::size_t k = i; k < M; ++k) {
+                        temp(j, k) -= factor * temp(i, k);
+                    }
+                }
+            }
+            det *= temp(i, i); // 将对角线元素乘到行列式上
+        }
+        return det;
+    }
+
+    template<std::size_t MM = M,typename = std::enable_if_t<MM = N>>
+    Matrix<M,M> inverse() const{
+        //构造增广矩阵
+        Matrix<M, 2*M> augmented;
+        for (std::size_t i = 0; i < M; ++i) {
+            for (std::size_t j = 0; j < M; ++j) {
+                augmented(i, j) = data[i][j];
+            }
+            augmented(i, i + M) = 1.0; // 设置单位矩阵部分
+        }
+        //使用高斯消元法求逆矩阵
+        for (std::size_t i = 0; i < M; ++i) {
+            // 找到主元
+            double pivot = augmented(i, i);
+            if (pivot == 0) {
+                throw std::runtime_error("Matrix is singular and cannot be inverted");
+            }
+            // 将主元归一化
+            for (std::size_t j = 0; j < 2 * M; ++j) {
+                augmented(i, j) /= pivot;
+            }
+            // 消去其他行的当前列
+            for (std::size_t j = 0; j < M; ++j) {
+                if (j != i) {
+                    double factor = augmented(j, i);
+                    for (std::size_t k = 0; k < 2 * M; ++k) {
+                        augmented(j, k) -= factor * augmented(i, k);
+                    }
+                }
+            }
+        }
+        // 提取逆矩阵
+        Matrix<M, M> inverse;
+        for (std::size_t i = 0; i < M; ++i) {
+            for (std::size_t j = 0; j < M; ++j) {
+                inverse(i, j) = augmented(i, j + M);
+            }
+        }
+        return inverse;
+    }
+
+    Matrix<M,1> getColumn(std::size_t col) const {
+        if (col >= N) {
+            throw std::out_of_range("Column index out of range");
+        }
+        Matrix<M,1> column;
+        for (std::size_t i = 0; i < M; ++i) {
+            column(i, 0) = data[i][col];
+        }
+        return column;
+    }
+    Matrix<1,N> getRow(std::size_t row) const {
+        if (row >= M) {
+            throw std::out_of_range("Row index out of range");
+        }
+        Matrix<1,N> rowVec;
+        for (std::size_t j = 0; j < N; ++j) {
+            rowVec(0, j) = data[row][j];
+        }
+        return rowVec;
+    }
+    template<std::size_t P, std::size_t Q>
+    Matrix<M, Q> operator*(const Matrix<P, Q>& other) const {
+        if (N != P) {
+            throw std::invalid_argument("Matrix dimensions do not match for multiplication");
+        }
+        Matrix<M, Q> result;
+        for (std::size_t i = 0; i < M; ++i) {
+            for (std::size_t j = 0; j < Q; ++j) {
+                result(i, j) = 0.0;
+                for (std::size_t k = 0; k < N; ++k) {
+                    result(i, j) += data[i][k] * other(k, j);
+                }
+            }
+        }
+        return result;
+    }
+    friend Matrix<M, N> operator*(double scalar, const Matrix<M, N>& mat) {
+        Matrix<M, N> result;
+        for (std::size_t i = 0; i < M; ++i) {
+            for (std::size_t j = 0; j < N; ++j) {
+                result(i, j) = scalar * mat(i, j);
+            }
+        }
+        return result;
+    }
+    Matrix<M, N> operator*(double scalar) const {
+        Matrix<M, N> result;
+        for (std::size_t i = 0; i < M; ++i) {
+            for (std::size_t j = 0; j < N; ++j) {
+                result(i, j) = data[i][j] * scalar;
+            }
+        }
+        return result;
+    }
+    Matrix<M,N> operator+(const Matrix<M,N>& other) const {
+        Matrix<M,N> result;
+        for (std::size_t i = 0; i < M; ++i) {
+            for (std::size_t j = 0; j < N; ++j) {
+                result(i, j) = data[i][j] + other(i, j);
+            }
+        }
+        return result;
+    }
+    Matrix<M,N> operator-(const Matrix<M,N>& other) const {
+        Matrix<M,N> result;
+        for (std::size_t i = 0; i < M; ++i) {
+            for (std::size_t j = 0; j < N; ++j) {
+                result(i, j) = data[i][j] - other(i, j);
+            }
+        }
+        return result;
+    }
+    Matrix<N,M> transpose() const {
+        Matrix<N,M> result;
+        for (std::size_t i = 0; i < M; ++i) {
+            for (std::size_t j = 0; j < N; ++j) {
+                result(j, i) = data[i][j];
+            }
+        }
+        return result;
+    }
+    double& operator()(std::size_t row, std::size_t col) {
+        if (row >= M || col >= N) {
+            throw std::out_of_range("Index out of range");
+        }
+        return data[row][col];
+    }
+    void print() const noexcept{
+        for (std::size_t i = 0; i < M; ++i) {
+            for (std::size_t j = 0; j < N; ++j) {
+                std::cout << data[i][j] << " ";
+            }
+            std::cout << std::endl;
+        }
+    }
 private:
     double data[M][N] {}; 
 };

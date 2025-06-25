@@ -5,6 +5,14 @@
 
 int main()
 {
+    Matrix<3,3> test {{0,1,0},{0,1,0},{0,1,0}};
+
+    std::cout<<test.determinant();
+    test.getRow(0).print();
+    test.getColumn(0).print();
+    test.transpose().print();
+    // std::cout<<test.getColumn(0).determinant()<<std::endl;
+    return 0;
     std::shared_ptr<Frame> cubeFrame = std::make_shared<Frame>(vec3(1.0, 0.0, 0.0), vec3(0.0, 1.0, 0.0), vec3(0.0, 0.0, 1.0));
     std::vector<std::shared_ptr<Point3D>> points;
     points.push_back(std::make_shared<Point3D>(-1.0,-1.0,-1.0,cubeFrame));
